@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+    <head>
+        <style>
+            body{
+                padding:0;
+                margin:0;
+                background-color:#444444; 
+                font-family: sans-serif;
+            }
+            #myCanvas{
+                padding:0;
+                margin: 0 auto;
+                display:block;
+                background-color:black;
+            }
+            #myDIV{
+                width:60%;
+                height:auto;
+                display:block;
+                margin: 0 auto;
+                padding-top:0.1%;
+                padding-bottom:0.1%;
+            }
+            #editStuff{
+                position: absolute;
+                right: 50px;
+                top: 20px;
+                background-color:black;
+                color: white;
+                display:block;
+                padding: 15px;
+                padding-top: 0px;
+                padding-bottom: 0px;
+            }
+            p{
+                line-height:22px;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="myCanvas"></canvas>
+        <script src="dawgine.js"></script>
+        <div id ="editStuff">
+            <p id="projectLoader">
+                Load Project: 
+                <br>
+                <input id="pgload" type="text" name="projload">
+                <br>
+                <input type="button" value="Load" onclick="loadNew();">
+            </p>
+            <p>
+                Create/Edit Object:
+            </p>
+            <p id="objectMeta">
+                Id: <input id="objID" type="text" value="NewObject">
+                <br>
+                X: <input id="objX" type="text" value="500" style="width: 25px">
+                Y: <input id="objY" type="text" value="500" style="width: 25px">
+                <br>
+                Width: <input id="objSizeX" type="text" value="100" style="width: 25px">
+                Height: <input id="objSizeY" type="text" value="100" style="width: 25px">
+                <br>
+                Color: <input id="objColor" type="text" style="width: 75px">
+                <br>
+                Image Address: <input id="objImage" type="text" style="width: 75px">
+                <br>
+                Rotation: <input id="objRot" type="text" style="width: 25px">
+                <br>
+                Type:
+                <select id = "typeObj" name="type">
+                        <option value="gameObject">gameObject</option>
+                        <option value="nullObject">nullObject</option>
+                        <option value="button">button</option>
+                        <option value="ui">ui</option>
+                      </select>
+                <br>
+                <br>
+                <input type="button" value="Create New Object" onclick="newObj();">
+                <br>
+                <input type="button" value="Unselect Object" onclick="unslctObj();"> 
+            </p>
+        </div>
+    </body>
+</html>
