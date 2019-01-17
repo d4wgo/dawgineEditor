@@ -207,7 +207,9 @@ var input = {
     five:false,
     six:false,
     seven:false,
-    mouse1:false
+    mouse1:false,
+    v:false,
+    backspace:false
 }
 var clickInput = {
     w:false,
@@ -228,7 +230,9 @@ var clickInput = {
     five:false,
     six:false,
     seven:false,
-    mouse1:false
+    mouse1:false,
+    v:false,
+    backspace:false
 };
 var nClick;
 document.addEventListener('keydown', function(event) {
@@ -304,6 +308,14 @@ document.addEventListener('keydown', function(event) {
         case "Digit7":
             input.seven = true;
             clickInput.seven = true;
+            break;
+        case "KeyV":
+            input.v = true;
+            clickInput.v = true;
+            break;
+        case "Backspace":
+            input.backspace = true;
+            clickInput.backspace = true;
             break;
     }
 });
@@ -407,7 +419,7 @@ setInterval(function(){
     }
     scaleX = canvas.width / virtualWidth;
     scaleY = canvas.height / virtualHeight;
-},1000/10); //refreshes canvas size a set times per second - the "10" is changeable to whatever tickrate works the best
+},1000/30); //refreshes canvas size a set times per second - the "10" is changeable to whatever tickrate works the best
 //canvas fit functions
 function fullScreenCanvas(){
     canvas.width = window.innerWidth;
@@ -436,8 +448,8 @@ function getCursorPosition(canvas, event) {
     var rect = canvas.getBoundingClientRect();
     var x = event.clientX - rect.left;
     var y = event.clientY - rect.top;
-    mousePos.x = x/scaleX;
-    mousePos.y = y/scaleY;
+    mousePos.x = x/scaleX - oDistX;
+    mousePos.y = y/scaleY - oDistY;
 }
 function pythagTheorem(a,b){
     return Math.sqrt(Math.pow(a,2) + Math.pow(b,2));
@@ -450,6 +462,8 @@ function start(){
 start();
 var prevTime = Date.now();
 var delta;
+var oDistX = 0;
+var oDistY = 0;
 function runGame(){
     delta = Date.now() - prevTime;
     if(input.two){
@@ -581,7 +595,9 @@ function runGame(){
 }
 window.requestAnimationFrame(runGame);
 function draw(){
+    ctx.setTransform(1,0,0,1,0,0);
     ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.translate(oDistX * scaleX,oDistY * scaleY);   
     for(var i = 0; i < nullObjects.length; i++){
         var tempObject = nullObjects[i];
         if(tempObject.gravity != null){
@@ -761,12 +777,36 @@ var sYOld;
 var imageOld;
 var rotOld;
 var objOld;
+var tool = "edit";
+var dragged = false;
+var startClick = {
+    x:0,
+    y:0
+}
 function scene1(a){
     if(a == "start"){
         //start function for scene1
     }
     else{
         //logic for scene 1
+        //console.log("X:" + mousePos.x + "---Y:" + mousePos.y);
+        var inBounds = mousePos.x > 0 - oDistX && mousePos.x < virtualWidth - oDistX;
+        if(tool == "drag" && inBounds){
+            if(clickInput.mouse1){
+                dragged = true;
+                startClick.x = mousePos.x;
+                startClick.y = mousePos.y;
+            }
+            if(dragged){
+                oDistX += (mousePos.x - startClick.x)/2;
+                oDistY += (mousePos.y - startClick.y)/2;
+                startClick.x = mousePos.x;
+                startClick.y = mousePos.y;
+            }
+            if(!input.mouse1 && dragged){
+                dragged = false;
+            }
+        }
         if(selectedObj != objOld){
             document.getElementById("objID").value = "newObj";
             document.getElementById("objX").value = "100";
@@ -779,33 +819,56 @@ function scene1(a){
         }
         if(selectedObj != null){
             //document.getElementById("objID").value = selectedObj.id;
-            selectedObj.x = Math.floor(selectedObj.x);
-            selectedObj.y = Math.floor(selectedObj.y);
-            selectedObj.sizeX = Math.floor(selectedObj.sizeX);
-            selectedObj.sizeY = Math.floor(selectedObj.sizeY);
-            if(parseInt(document.getElementById("objX").value) != xOld || parseInt(document.getElementById("objY").value) != yOld || document.getElementById("objColor").value != colorOld || parseInt(document.getElementById("objSizeX").value) != sXOld || parseInt(document.getElementById("objSizeY").value) != sYOld || rotOld != parseFloat(document.getElementById("objRot").value)){
-                selectedObj.color = document.getElementById("objColor").value;
-                selectedObj.x = parseInt(document.getElementById("objX").value);
-                selectedObj.y = parseInt(document.getElementById("objY").value);
-                selectedObj.sizeX = parseInt(document.getElementById("objSizeX").value);
-                selectedObj.sizeY = parseInt(document.getElementById("objSizeY").value);
-                selectedObj.rotation = parseFloat(document.getElementById("objRot").value);
+            if(input.s && inBounds){
+                virtualWidth += delta/5;
+                virtualHeight += delta/5;
             }
-            if(parseInt(document.getElementById("objImage").value) != imageOld){
-                if(document.getElementById("objImage").value != null){
-                    selectedObj.image = new Image();
-                    selectedObj.image.src = document.getElementById("objImage").value;
+            if(input.w && inBounds){
+                virtualWidth -= delta/5;
+                virtualHeight -= delta/5;
+            }
+            if(clickInput.backspace && inBounds){
+                var iid = selectedObj.id;
+                unslctObj();
+                deleteObject(iid);
+                deleteObject(iid + "#-1");
+                deleteObject(iid + "#-2");
+                deleteObject(iid + "#-3");
+                deleteObject(iid + "#-4");
+                deleteObject(iid + "#-5");
+            }
+            else if(clickInput.v && inBounds){
+                dupObj();
+            }
+            else{
+                selectedObj.x = Math.floor(selectedObj.x);
+                selectedObj.y = Math.floor(selectedObj.y);
+                selectedObj.sizeX = Math.floor(selectedObj.sizeX);
+                selectedObj.sizeY = Math.floor(selectedObj.sizeY);
+                if(parseInt(document.getElementById("objX").value) != xOld || parseInt(document.getElementById("objY").value) != yOld || document.getElementById("objColor").value != colorOld || parseInt(document.getElementById("objSizeX").value) != sXOld || parseInt(document.getElementById("objSizeY").value) != sYOld || rotOld != parseFloat(document.getElementById("objRot").value)){
+                    selectedObj.color = document.getElementById("objColor").value;
+                    selectedObj.x = parseInt(document.getElementById("objX").value);
+                    selectedObj.y = parseInt(document.getElementById("objY").value);
+                    selectedObj.sizeX = parseInt(document.getElementById("objSizeX").value);
+                    selectedObj.sizeY = parseInt(document.getElementById("objSizeY").value);
+                    selectedObj.rotation = parseFloat(document.getElementById("objRot").value);
                 }
+                if(parseInt(document.getElementById("objImage").value) != imageOld){
+                    if(document.getElementById("objImage").value != null){
+                        selectedObj.image = new Image();
+                        selectedObj.image.src = document.getElementById("objImage").value;
+                    }
+                }
+                xOld = parseInt(document.getElementById("objX").value);
+                yOld = parseInt(document.getElementById("objY").value);
+                colorOld = document.getElementById("objColor").value;
+                sXOld = parseInt(document.getElementById("objSizeX").value);
+                sYOld = parseInt(document.getElementById("objSizeY").value);
+                imageOld = parseInt(document.getElementById("objImage").value);
+                rotOld = parseFloat(document.getElementById("objRot").value);
             }
-            xOld = parseInt(document.getElementById("objX").value);
-            yOld = parseInt(document.getElementById("objY").value);
-            colorOld = document.getElementById("objColor").value;
-            sXOld = parseInt(document.getElementById("objSizeX").value);
-            sYOld = parseInt(document.getElementById("objSizeY").value);
-            imageOld = parseInt(document.getElementById("objImage").value);
-            rotOld = parseFloat(document.getElementById("objRot").value);
         }
-        if(selectedObj != null){
+        if(selectedObj != null && inBounds){
             if(input.a){
                 selectedObj.rotation -= delta/1000;
                 document.getElementById("objRot").value = selectedObj.rotation;
@@ -833,7 +896,7 @@ function scene1(a){
         }
         for(var i = 0; i < buttons.length; i++){
             var s = buttons[i];
-            if(!s.id.includes("#-")){
+            if(!s.id.includes("#-") && tool == "edit"){
                 var sh1 = findObject(s.id + "#-1");
                 var sh2 = findObject(s.id + "#-2");
                 var sh3 = findObject(s.id + "#-3");
@@ -879,7 +942,7 @@ function scene1(a){
                     sh5.color = null;
                 }
             }
-            else if(s.id.includes("#-")){
+            else if(s.id.includes("#-") && tool == "edit"){
                 var parentObj = findObject(s.id.substring(0,s.id.length - 3));
                 if(s.hovered){
                     s.color = "white";
@@ -936,7 +999,6 @@ function newObj(){
     var color = document.getElementById("objColor").value;
     var imgUrl = document.getElementById("objImage").value;
     var rotation = parseFloat(document.getElementById("objRot").value);
-    console.log(tid);
     try{
         if(type == "gameObject"){
             print.push("gameObjects.push(new GameObject(tid,tx,ty,tsX,tsY))");
@@ -950,14 +1012,29 @@ function newObj(){
         else if(type == "nullObject"){
             print.push("nullObjects.push(new GameObject(tid,tx,ty,tsX,tsY));");
             buttons.push(new GameObject(tid,tx,ty,tsX,tsY));
+            buttons.push(new GameObject(tid + "#-1",tx - (tsX/2),ty - (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-2",tx + (tsX/2),ty - (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-3",tx + (tsX/2),ty + (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-4",tx - (tsX/2),ty + (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-5",tx,ty,10,10));
         }
         else if(type == "button"){
             print.push("buttons.push(new GameObject(tid,tx,ty,tsX,tsY));");
             buttons.push(new GameObject(tid,tx,ty,tsX,tsY));
+            buttons.push(new GameObject(tid + "#-1",tx - (tsX/2),ty - (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-2",tx + (tsX/2),ty - (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-3",tx + (tsX/2),ty + (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-4",tx - (tsX/2),ty + (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-5",tx,ty,10,10));
         }
         else{
             print.push("ui.push(new GameObject(tid,tx,ty,tsX,tsY));");
             buttons.push(new GameObject(tid,tx,ty,tsX,tsY));
+            buttons.push(new GameObject(tid + "#-1",tx - (tsX/2),ty - (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-2",tx + (tsX/2),ty - (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-3",tx + (tsX/2),ty + (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-4",tx - (tsX/2),ty + (tsY/2),10,10));
+            buttons.push(new GameObject(tid + "#-5",tx,ty,10,10));
         }
         var o = findObject(tid);
         if(color != null){
@@ -999,6 +1076,12 @@ function dupObj(){
     subX += subSX/1.5;
     document.getElementById("objX").value = subX.toString();
     newObj();
+}
+function editTool(){
+    tool = "edit";
+}
+function dragTool(){
+    tool = "drag";
 }
 function scene2(a){
     if(a == "start"){
