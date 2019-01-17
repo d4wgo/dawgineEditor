@@ -490,7 +490,7 @@ function runGame(){
             button.clicked = true;
         }
         else{
-            if(!input.mouse1){
+            if(!input.mouse1 || pythagTheorem(mousePos.x - button.x,mousePos.y - button.y) > 100){
                 button.clicked = false;
             }
         }
@@ -778,6 +778,7 @@ function scene1(a){
             document.getElementById("objImage").value = null;
         }
         if(selectedObj != null){
+            //document.getElementById("objID").value = selectedObj.id;
             selectedObj.x = Math.floor(selectedObj.x);
             selectedObj.y = Math.floor(selectedObj.y);
             selectedObj.sizeX = Math.floor(selectedObj.sizeX);
@@ -880,10 +881,10 @@ function scene1(a){
             }
             else if(s.id.includes("#-")){
                 var parentObj = findObject(s.id.substring(0,s.id.length - 3));
-                if(s.hovered && (parentObj == selectedObj || selectedObj == null)){
+                if(s.hovered){
                     s.color = "white";
                 }
-                if(s.clicked && (parentObj == selectedObj || selectedObj == null)){
+                if(s.clicked && (selectedObj == parentObj || selectedObj == null || pythagTheorem(s.x - selectedObj.x,s.y - selectedObj.y) > selectedObj.sizeX)){
                     s.color = "black";
                     selectedObj = parentObj;
                     document.getElementById("objID").value = selectedObj.id;
@@ -935,7 +936,7 @@ function newObj(){
     var color = document.getElementById("objColor").value;
     var imgUrl = document.getElementById("objImage").value;
     var rotation = parseFloat(document.getElementById("objRot").value);
-
+    console.log(tid);
     try{
         if(type == "gameObject"){
             print.push("gameObjects.push(new GameObject(tid,tx,ty,tsX,tsY))");
@@ -972,6 +973,7 @@ function newObj(){
         else{
             rotation = 0;
         }
+        selectedObj = null;
     }
     catch(e){
         console.log(e);
@@ -987,6 +989,16 @@ function unslctObj(){
     document.getElementById("objColor").value = null;
     document.getElementById("objRot").value = "0";
     document.getElementById("objImage").value = null;
+}
+var count = 0;
+function dupObj(){
+    document.getElementById("objID").value += "Copy" + count.toString();
+    count++;
+    var subX = parseInt(document.getElementById("objX").value);
+    var subSX = parseInt(document.getElementById("objSizeX").value);
+    subX += subSX/1.5;
+    document.getElementById("objX").value = subX.toString();
+    newObj();
 }
 function scene2(a){
     if(a == "start"){
