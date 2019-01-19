@@ -34,6 +34,7 @@ class GameObject{
         this.changeX = 0;
         this.changeY = 0;
         this.rotateBox = null;
+        this.type = null;
     }
 }
 function findObject(id){
@@ -767,6 +768,12 @@ function switchScene(a){
             break;
     }
 }
+setInterval(function(){
+    var n = document.getElementById("autosaver");
+    if(n.checked){
+        printProj(false);
+    }
+},30000);
 var selectedObj = null;
 var print = [];
 var xOld;
@@ -853,18 +860,21 @@ function scene1(a){
                     selectedObj.sizeY = parseInt(document.getElementById("objSizeY").value);
                     selectedObj.rotation = parseFloat(document.getElementById("objRot").value);
                 }
-                if(parseInt(document.getElementById("objImage").value) != imageOld){
-                    if(document.getElementById("objImage").value != null){
+                if(document.getElementById("objImage").value != imageOld){
+                    if(document.getElementById("objImage").value != null && document.getElementById("objImage").value != ""){
                         selectedObj.image = new Image();
                         selectedObj.image.src = document.getElementById("objImage").value;
                     }
+                }
+                if(document.getElementById("objImage").value != ""){
+                    selectedObj.color = null;
                 }
                 xOld = parseInt(document.getElementById("objX").value);
                 yOld = parseInt(document.getElementById("objY").value);
                 colorOld = document.getElementById("objColor").value;
                 sXOld = parseInt(document.getElementById("objSizeX").value);
                 sYOld = parseInt(document.getElementById("objSizeY").value);
-                imageOld = parseInt(document.getElementById("objImage").value);
+                imageOld = document.getElementById("objImage").value;
                 rotOld = parseFloat(document.getElementById("objRot").value);
             }
         }
@@ -957,14 +967,20 @@ function scene1(a){
                     document.getElementById("objSizeY").value = selectedObj.sizeY.toString();
                     document.getElementById("objColor").value = selectedObj.color;
                     document.getElementById("objRot").value = selectedObj.rotation;
-                    if(selectedObj.image.src != null && !selectedObj.image.src.includes("editor.html")){
+                    if(selectedObj.image != null){
                         document.getElementById("objImage").value = selectedObj.image.src;
                     }
                     else{
                         document.getElementById("objImage").value = null;
                     }
-                    s.x = mousePos.x;
-                    s.y = mousePos.y;
+                    if(clickInput.mouse1){
+                        startClick.x = mousePos.x;
+                        startClick.y = mousePos.y;
+                    }
+                    if(pythagTheorem(startClick.x - mousePos.x,startClick.y - mousePos.y) > 2.5){
+                        s.x = mousePos.x;
+                        s.y = mousePos.y;
+                    }
                     if(s.id.substring(s.id.length - 3,s.id.length) == "#-5"){
                         parentObj.x = s.x;
                         parentObj.y = s.y;
@@ -997,7 +1013,6 @@ function newObj(){
     var tsY = parseInt(document.getElementById("objSizeY").value);
     var type = document.getElementById("typeObj").value;
     var color = document.getElementById("objColor").value;
-    var imgUrl = document.getElementById("objImage").value;
     var rotation = parseFloat(document.getElementById("objRot").value);
     try{
         if(type == "gameObject"){
@@ -1037,10 +1052,12 @@ function newObj(){
             buttons.push(new GameObject(tid + "#-5",tx,ty,10,10));
         }
         var o = findObject(tid);
+        o.type = type;
         if(color != null){
             o.color = color;
         }
-        if(imgUrl != null){
+        var imgUrl = document.getElementById("objImage").value;
+        if(imgUrl != null && imgUrl != ""){
             o.image = new Image();
             o.image.src = imgUrl;
         }
@@ -1076,6 +1093,114 @@ function dupObj(){
     subX += subSX/1.5;
     document.getElementById("objX").value = subX.toString();
     newObj();
+}
+function printProj(e){
+    var toPrint = "";
+    for(var i = 0; i < buttons.length; i++){
+        var prO = buttons[i];
+        if(!prO.id.includes("#-")){
+            toPrint += ">id=" + prO.id + "^type=" + prO.type + "^x=" + prO.x + "^y=" + prO.y + "^sx=" + prO.sizeX + "^sy=" + prO.sizeY;
+            if(prO.color != null && prO.color != ""){
+                toPrint += "^color=" + prO.color;
+            }
+            if(prO.image != null && prO.image.src != ""){
+                toPrint += "^image=" + prO.image.src;
+            }
+            if(prO.rotation != null && prO.rotation != 0){
+                toPrint += "^rotation=" + prO.rotation;
+            }
+        }
+    }
+    if(e){
+        document.getElementById("pgload").value = toPrint.substring(1,toPrint.length);
+    }
+    localStorage.setItem("dawgineAutoSave",toPrint);
+}
+function loadNew(){
+    var load = document.getElementById("pgload").value;
+    if(load == "" || load == null){
+        load = localStorage.getItem("dawgineAutoSave");
+    }
+    var eachObj = load.split(">");
+    for(var i = 0; i < eachObj.length; i++){
+        var eachElement = eachObj[i].split("^");
+        var type;
+        var id;
+        var x;
+        var y;
+        var sX;
+        var sY;
+        var color = null;
+        var image = null;
+        var rotation = 0;
+        for(var j = 0; j < eachElement.length; j++){
+            var element = eachElement[j].split("=");
+            var elementN = element[0];
+            var elementB = element[1];
+            if(elementN == "type"){
+                type = elementB;
+            }
+            else if(elementN == "id"){
+                id = elementB;
+            }
+            else if(elementN == "x"){
+                x = parseInt(elementB);
+            }
+            else if(elementN == "y"){
+                y = parseInt(elementB);
+            }
+            else if(elementN == "sx"){
+                sX = parseInt(elementB);
+            }
+            else if(elementN == "sy"){
+                sY = parseInt(elementB);
+            }
+            else if(elementN == "color"){
+                color = elementB;
+            }
+            else if(elementN == "image"){
+                image = elementB;
+            }
+            else if(elementN == "rotation"){
+                rotation = parseFloat(elementB);
+            }
+        }
+        var gameO = new GameObject(id,x,y,sX,sY);
+        gameO.color = color;
+        if(image != null){
+            gameO.image = new Image();
+            gameO.image.src = image;
+        }
+        gameO.rotation = rotation;
+        document.getElementById("objID").value = id;
+        document.getElementById("objX").value = x.toString();
+        document.getElementById("objY").value = y.toString();
+        document.getElementById("objSizeX").value = sX.toString();
+        document.getElementById("objSizeY").value = sY.toString();
+        document.getElementById("objColor").value = color;
+        if(rotation != null){
+            document.getElementById("objRot").value = rotation.toString();
+        }
+        else{
+            document.getElementById("objRot").value = null;
+        }
+        document.getElementById("objImage").value = image;
+        document.getElementById("typeObj").value = type;
+        newObj();
+        /*
+        if(type == "gameObject"){
+            gameObjects.push(gameO);
+        }
+        else if(type == "nullObject"){
+            nullObjects.push(gameO);
+        }
+        else if(type == "button"){
+            buttons.push(gameO);
+        }
+        else{
+            ui.push(gameO);
+        }*/
+    }
 }
 function editTool(){
     tool = "edit";
