@@ -978,8 +978,18 @@ function scene1(a){
                         startClick.y = mousePos.y;
                     }
                     if(pythagTheorem(startClick.x - mousePos.x,startClick.y - mousePos.y) > 2.5){
-                        s.x = mousePos.x;
-                        s.y = mousePos.y;
+                        var n = document.getElementById("gridYes");
+                        if(n.checked){
+                            var gridS = parseFloat(document.getElementById("gridSize").value);
+                            var gridNX = Math.floor(mousePos.x / gridS);
+                            var gridNY = Math.floor(mousePos.y / gridS);
+                            s.x = gridNX * gridS;
+                            s.y = gridNY * gridS;
+                        }
+                        else{
+                            s.x = mousePos.x;
+                            s.y = mousePos.y;
+                        }
                     }
                     if(s.id.substring(s.id.length - 3,s.id.length) == "#-5"){
                         parentObj.x = s.x;
@@ -999,6 +1009,7 @@ function scene1(a){
                             }
                         }
                     }
+                    break;
                 }
             }
         }
